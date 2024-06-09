@@ -22,21 +22,19 @@ func (app *application) healthcheckHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (app *application) writeJson(w http.ResponseWriter, status int, data any, headers http.Header) error {
-	js, err := json.Marshal(data)
+	// Use the json.MarshalIndent() function so that whitespace is added to the encoded
+	// JSON. Here we use no line prefix ("") and tab indents ("\t") for each element.
+	js, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {
 		return err
 	}
-
+	js = append(js, '\n')
 	for key, value := range headers {
 		w.Header()[key] = value
 	}
-
-	js = append(js, '\n')
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	w.Write(js)
-
 	return nil
 }
 
