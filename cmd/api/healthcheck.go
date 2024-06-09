@@ -5,25 +5,28 @@ import (
 	"net/http"
 )
 
-func (app *application) healthcheckHandler(w http.ResponseWriter, r *http.Request) {
-	healthCkeckData := map[string]string{
-		"status":      "available",
-		"environment": app.config.env,
-		"version":     version,
-	}
+// Define an envelope type.
+type envelope map[string]any
 
-	// get the json representation of the healthcheck data in bytes slice
-	err := app.writeJson(w, http.StatusOK, healthCkeckData, nil)
+func (app *application) healthcheckHandler(w http.ResponseWriter, r *http.Request) {
+	// Declare an envelope map containing the data for the response. Notice that the way we've constructed this means the environment
+	// and version data will now be nested under a system_info key in the JSON response.
+	env := envelope{
+		"status": "available",
+		"system_info": map[string]string{
+			"environment": app.config.env,
+			"version":     version,
+		},
+	}
+	err := app.writeJson(w, http.StatusOK, env, nil)
 	if err != nil {
 		app.logger.Error(err.Error())
-		http.Error(w, "Internal Server Error : The server encountered a problem and could not process your request", http.StatusInternalServerError)
-		return
+		http.Error(w, "The server encountered a problem and could not process your request", http.StatusInternalServerError)
 	}
 }
 
-func (app *application) writeJson(w http.ResponseWriter, status int, data any, headers http.Header) error {
-	// Use the json.MarshalIndent() function so that whitespace is added to the encoded
-	// JSON. Here we use no line prefix ("") and tab indents ("\t") for each element.
+// Change the data parameter to have the type envelope instead of any.
+func (app *application) writeJson(w http.ResponseWriter, status int, data envelope, headers http.Header) error {
 	js, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {
 		return err
