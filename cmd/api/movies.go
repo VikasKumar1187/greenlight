@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -20,17 +19,13 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 		Runtime int32    `json:"runtime"`
 		Genres  []string `json:"genres"`
 	}
-	// Initialize a new json.Decoder instance which reads from the request body, and
-	// then use the Decode() method to decode the body contents into the input struct.
-	// Importantly, notice that when we call Decode() we pass a *pointer* to the input
-	// struct as the target decode destination. If there was an error during decoding,
-	// we also use our generic errorResponse() helper to send the client a 400 Bad
-	// Request response containing the error message.
-	err := json.NewDecoder(r.Body).Decode(&input)
+	err := app.readJSON(w, r, &input)
 	if err != nil {
-		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
+		// Use the new badRequestResponse() helper.
+		app.badRequestResponse(w, r, err)
 		return
 	}
+
 	// Dump the contents of the input struct in a HTTP response.
 	fmt.Fprintf(w, "%+v\n", input)
 }
